@@ -65,7 +65,7 @@ When prompted, enter your **Hugging Face API Token** to access Mistral-7B.
 ---
 
 ## Demo Video  
-Watch the demo: **[Demo Video Link](YOUR_VIDEO_LINK_HERE)**  
+Watch the demo: **[Demo Video Link](https://drive.google.com/file/d/18X2zLuiuZBRBdI1kytPnYEb6101qtTtk/view?usp=sharing)**  
 
 ---
 
