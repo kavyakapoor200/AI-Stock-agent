@@ -63,7 +63,6 @@ When prompted, enter your **Hugging Face API Token** to access Mistral-7B.
 | ![TSLA Chart](TSLA_plot.png) | ![AAPL Chart](AAPL_plot.png) |  
 
 ---
-
 ```mermaid
 graph TD;
     A[User Query] -->|Extract Tickers| B{Check for Stock Symbols};
@@ -73,8 +72,6 @@ graph TD;
     E --> F[Return Stock Price & Graph];
     D --> G[Generate Text Response with Mistral-7B];
     F & G --> H[Display Output to User];
-
----
 
 ## Demo Video  
 Watch the demo: **[Demo Video Link](https://drive.google.com/file/d/18X2zLuiuZBRBdI1kytPnYEb6101qtTtk/view?usp=sharing)**  
