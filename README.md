@@ -64,6 +64,18 @@ When prompted, enter your **Hugging Face API Token** to access Mistral-7B.
 
 ---
 
+```mermaid
+graph TD;
+    A[User Query] -->|Extract Tickers| B{Check for Stock Symbols};
+    B -- Yes --> C[Fetch Stock Price with yFinance];
+    B -- No --> D[Send Query to LLM];
+    C --> E[Plot Stock Data using Matplotlib];
+    E --> F[Return Stock Price & Graph];
+    D --> G[Generate Text Response with Mistral-7B];
+    F & G --> H[Display Output to User];
+
+---
+
 ## Demo Video  
 Watch the demo: **[Demo Video Link](https://drive.google.com/file/d/18X2zLuiuZBRBdI1kytPnYEb6101qtTtk/view?usp=sharing)**  
 
