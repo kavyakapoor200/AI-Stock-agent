@@ -1,4 +1,3 @@
-
 # app.py
 import os
 import requests
@@ -7,35 +6,30 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 
 # ---------------------------
-#  MISTRAL API (no key in code)
+#  MISTRAL API
 # ---------------------------
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")  # set this in your terminal or .env
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 
 def mistral_llm(prompt):
-    """Call Mistral Chat Completions API and return assistant content or error message."""
+    """Call Mistral Chat Completions API."""
     url = "https://api.mistral.ai/v1/chat/completions"
-
     headers = {
         "Authorization": f"Bearer {MISTRAL_API_KEY}",
         "Content-Type": "application/json"
     }
-
     payload = {
         "model": "mistral-medium-latest",
         "messages": [{"role": "user", "content": prompt}]
     }
 
-    response = requests.post(url, json=payload, headers=headers)
     try:
+        response = requests.post(url, json=payload, headers=headers)
         data = response.json()
     except Exception as e:
-        return f"API/Network error: {e}"
-
-    # debug - remove/comment in production if not needed
-    # st.write("RAW Mistral response (debug):", data)
+        return f"❌ API/Network error: {e}"
 
     if "choices" not in data:
-        return f"API Error: {data}"
+        return f"❌ API Error: {data}"
 
     return data["choices"][0]["message"]["content"]
 
@@ -48,19 +42,18 @@ def query_llm(prompt):
 #   STOCK FUNCTIONS
 # ---------------------------
 def fetch_stock_price(ticker: str):
-    """Fetch today's close price for the ticker."""
     try:
         stock = yf.Ticker(ticker)
         price_data = stock.history(period="1d")["Close"]
         if price_data.empty:
-            return f" No data found for {ticker} (may be delisted or invalid)." 
-        return f" **Current price of {ticker}:** ${price_data.iloc[-1]:.2f}" 
+            return f"❌ No data found for **{ticker}** (may be invalid)."
+        return f"💰 **Current price of {ticker}:** `${price_data.iloc[-1]:.2f}`"
     except Exception as e:
-        return f" Error fetching stock data for {ticker}: {e}" 
+        return f"❌ Error fetching stock data for {ticker}: {e}"
 
 
 def plot_stock(ticker):
-    """Fetch 1 month history and return a saved plot image path."""
+    """Returns plot file path."""
     try:
         stock = yf.Ticker(ticker)
         history = stock.history(period="1mo")
@@ -85,7 +78,7 @@ def plot_stock(ticker):
 
 
 def extract_tickers(query):
-    """Dynamically detect valid stock tickers using yfinance."""
+    """Dynamic ticker detection."""
     words = query.upper().split()
     tickers = []
 
@@ -96,23 +89,18 @@ def extract_tickers(query):
         try:
             stock = yf.Ticker(w)
             hist = stock.history(period="1d")
-
-            if hist.empty:
-                continue
-
-            tickers.append(w)
-
-        except Exception:
-            continue
+            if not hist.empty:
+                tickers.append(w)
+        except:
+            pass
 
     return tickers
 
 
 def get_company_info(ticker):
-    """Fetch company details from yfinance."""
+    """Fetch company details."""
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        info = yf.Ticker(ticker).info
 
         name = info.get("longName", "N/A")
         sector = info.get("sector", "N/A")
@@ -126,19 +114,19 @@ def get_company_info(ticker):
             market_cap = "N/A"
 
         return (
-            f" **Company:** {name}\n" 
-            f" **Sector:** {sector}\n" 
-            f" **Industry:** {industry}\n" 
-            f" **Market Cap:** {market_cap}\n" 
-            f" **Website:** {website}\n" 
+            f"🏢 **Company:** {name}\n"
+            f"🏭 **Sector:** {sector}\n"
+            f"🔧 **Industry:** {industry}\n"
+            f"💰 **Market Cap:** {market_cap}\n"
+            f"🔗 **Website:** {website}\n"
         )
 
-    except Exception:
-        return " No company info available." 
+    except:
+        return "ℹ️ Company info unavailable."
 
 
 def explain_stock_movement(ticker, history):
-    """Use Mistral LLM to explain trend."""
+    """Generate AI-based stock trend explanation."""
     if history is None or history.empty:
         return "No trend data available."
 
@@ -153,7 +141,7 @@ def explain_stock_movement(ticker, history):
     End Price: {end_price:.2f}
     Percentage Change: {percent_change:.2f}%
 
-    Explain the trend in simple words (no financial advice).
+    Give a simple explanation (no financial advice).
     """
 
     return mistral_llm(prompt)
@@ -163,36 +151,29 @@ def explain_stock_movement(ticker, history):
 #   AGENT LOGIC
 # ---------------------------
 def agent_response_text(query: str):
-    """
-    Auto-detect tickers.
-    If tickers exist -> fetch stock price, company info, chart, and AI analysis.
-    Otherwise -> answer from LLM.
-    """
     results = []
-
     tickers = extract_tickers(query)
 
     if tickers:
-        results.append(f"🔍 Detected tickers: {', '.join(tickers)}")
+        results.append(f"🔍 **Detected tickers:** {', '.join(tickers)}")
 
         for t in tickers:
-            # 1. Stock Price
+            # PRICE
             results.append(fetch_stock_price(t))
 
-            # 2. Company Info
-            info = get_company_info(t)
-            results.append(info)
+            # COMPANY INFO
+            results.append(get_company_info(t))
 
-            # 3. Chart + history
+            # CHART + HISTORY
             stock = yf.Ticker(t)
             history = stock.history(period="1mo")
             plot_path = plot_stock(t)
             if plot_path:
-                results.append(plot_path)
+                results.append({"type": "image", "path": plot_path})
 
-            # 4. AI Trend Explanation
+            # AI EXPLANATION
             explanation = explain_stock_movement(t, history)
-            results.append(f" **AI Insight for {t}:**\n{explanation}") 
+            results.append(f"🧠 **AI Insight for {t}:**\n{explanation}")
 
         return results
 
@@ -204,51 +185,47 @@ def agent_response_text(query: str):
 #    STREAMLIT UI
 # ---------------------------
 st.set_page_config(page_title="AI Stock Agent", layout="wide")
-st.title("📊 AI Stock Agent (Mistral API + Streamlit)")
-st.write("Ask anything or request stock prices. Example: `stock price of TSLA and AAPL`")
+st.title("📊 AI Stock Agent (Mistral + Streamlit + Finance)")
+st.write("Ask anything! Example: **TSLA**, **How is MSFT performing today?**, **Explain AI**")
 
-# Sidebar: show status and instructions
+# Sidebar
 with st.sidebar:
-    st.header("Settings / Info")
-    st.write("- Make sure `MISTRAL_API_KEY` environment variable is set.")
-    st.write("- Built with Mistral 7B (API), yfinance, Streamlit.")
-    if MISTRAL_API_KEY is None:
-        st.error("MISTRAL_API_KEY is not set! Set it before running the app.")
-    st.markdown("---")
-    st.markdown("**How to ask**")
-    st.write("• Stock price: `stock price of TSLA`")
-    st.write("• General question: `Explain machine learning`")
+    st.header("ℹ️ Info")
+    st.write("Built with:")
+    st.write("- Mistral API")
+    st.write("- yfinance")
+    st.write("- Streamlit")
+    st.write("- Python Agents")
 
-# Main input
-user_query = st.text_input("Enter your query here:", value="")
+    if not MISTRAL_API_KEY:
+        st.error("❌ MISTRAL_API_KEY not set!")
+
+# User Input
+query = st.text_input("Enter your query:")
 
 if st.button("Run Agent"):
-    if not user_query or user_query.strip() == "":
-        st.warning("Please type a query.")
+    if not query.strip():
+        st.warning("Please type a question.")
     else:
-        with st.spinner("Agent is thinking..."):
-            outputs = agent_response_text(user_query)
+        with st.spinner("Thinking..."):
+            results = agent_response_text(query)
 
-        # show outputs: strings or png filepaths
-        for out in outputs:
-            if isinstance(out, str) and out.lower().endswith(".png"):
-                try:
-                    st.image(out, use_column_width=True)
-                except Exception:
-                    st.write(f"(Could not display image file: {out})")
+        for item in results:
+            if isinstance(item, dict) and item.get("type") == "image":
+                st.image(item["path"], use_container_width=True)
             else:
-                st.write(out)
+                st.markdown(item)
 
-# Optional: keep a simple history in the session
+# Query History
 if "history" not in st.session_state:
     st.session_state.history = []
 
-if user_query:
-    if st.button("Save to history"):
-        st.session_state.history.append(user_query)
-        st.success("Saved to history")
+if query:
+    if st.button("Save Query"):
+        st.session_state.history.append(query)
+        st.success("Saved!")
 
 if st.session_state.history:
-    st.markdown("### 🔁 Query History")
-    for i, q in enumerate(reversed(st.session_state.history[-10:]), 1):
-        st.write(f"{i}. {q}")
+    st.subheader("🕘 Recent History")
+    for h in reversed(st.session_state.history[-10:]):
+        st.write(f"- {h}")
