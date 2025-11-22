@@ -150,12 +150,30 @@ def explain_stock_movement(ticker, history):
 # ---------------------------
 #   AGENT LOGIC
 # ---------------------------
+
+FINANCE_KEYWORDS = [
+    "stock", "price", "market", "finance", "financial", "investment", "invest",
+    "trend", "chart", "company", "earning", "revenue", "profit", "loss",
+    "p/e", "portfolio", "asset", "fund", "nasdaq", "nyse", "share"
+]
+
+
 def agent_response_text(query: str):
+    """
+    Finance-only agent:
+     If ticker found → full stock data + chart + AI explanation
+     If finance query without ticker → ask user to give ticker
+     If NOT finance → reject the query
+    """
+    query_lower = query.lower()
     results = []
+
+    # --- 1) Detect tickers ---
     tickers = extract_tickers(query)
 
+    # --- 2) STOCK MODE (Ticker found) ---
     if tickers:
-        results.append(f"🔍 **Detected tickers:** {', '.join(tickers)}")
+        results.append(f" **Detected tickers:** {', '.join(tickers)}")
 
         for t in tickers:
             # PRICE
@@ -171,14 +189,19 @@ def agent_response_text(query: str):
             if plot_path:
                 results.append({"type": "image", "path": plot_path})
 
-            # AI EXPLANATION
+            # AI TREND EXPLANATION
             explanation = explain_stock_movement(t, history)
-            results.append(f"🧠 **AI Insight for {t}:**\n{explanation}")
+            results.append(f" **AI Insight for {t}:**\n{explanation}")
 
         return results
 
-    else:
-        return [query_llm(query)]
+    # --- 3) FINANCE QUERY BUT NO TICKER ---
+    if any(word in query_lower for word in FINANCE_KEYWORDS):
+        return [" Please include a valid stock ticker. Example: `AAPL`, `MSFT`, `TSLA`."]
+
+    # --- 4) NOT FINANCE → completely block ---
+    return [" This agent only handles stock & finance-related queries."]
+
 
 
 # ---------------------------
