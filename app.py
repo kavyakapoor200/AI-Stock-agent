@@ -152,9 +152,12 @@ def explain_stock_movement(ticker, history):
 # ---------------------------
 
 FINANCE_KEYWORDS = [
-    "stock", "price", "market", "finance", "financial", "investment", "invest",
-    "trend", "chart", "company", "earning", "revenue", "profit", "loss",
-    "p/e", "portfolio", "asset", "fund", "nasdaq", "nyse", "share"
+    "stock", "stocks", "price", "market", "finance", "financial", "invest",
+    "investment", "investing", "trend", "chart", "company", "earning",
+    "earnings", "revenue", "profit", "loss", "valuation", "ipo",
+    "dividend", "share", "shares", "portfolio", "asset", "fund", 
+    "etf", "nasdaq", "nyse", "sensex", "nifty", "broker", "trading",
+    "pe", "p/e", "ratio", "volume", "close", "opening", "intraday"
 ]
 
 
