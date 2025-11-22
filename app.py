@@ -160,21 +160,20 @@ FINANCE_KEYWORDS = [
     "pe", "p/e", "ratio", "volume", "close", "opening", "intraday"
 ]
 
-
 def agent_response_text(query: str):
     """
-    Finance-only agent:
-     If ticker found → full stock data + chart + AI explanation
-     If finance query without ticker → ask user to give ticker
-     If NOT finance → reject the query
+    Smart finance agent:
+    Ticker → full stock analysis
+    Finance theory → LLM explanation
+    Non-finance → reject
     """
     query_lower = query.lower()
     results = []
 
-    # --- 1) Detect tickers ---
+    # --- 1) DETECT TICKERS ---
     tickers = extract_tickers(query)
 
-    # --- 2) STOCK MODE (Ticker found) ---
+    # --- 2) STOCK MODE: VALID TICKERS FOUND ---
     if tickers:
         results.append(f" **Detected tickers:** {', '.join(tickers)}")
 
@@ -185,38 +184,36 @@ def agent_response_text(query: str):
             # COMPANY INFO
             results.append(get_company_info(t))
 
-            # CHART + HISTORY
+            # CHART
             stock = yf.Ticker(t)
             history = stock.history(period="1mo")
             plot_path = plot_stock(t)
             if plot_path:
                 results.append({"type": "image", "path": plot_path})
 
-            # AI TREND EXPLANATION
+            # AI TREND INSIGHT
             explanation = explain_stock_movement(t, history)
             results.append(f" **AI Insight for {t}:**\n{explanation}")
 
         return results
 
-    # --- 3) FINANCE QUERY BUT NO TICKER ---
-    if any(word in query_lower for word in FINANCE_KEYWORDS):
-        return [" Please include a valid stock ticker. Example: `AAPL`, `MSFT`, `TSLA`."]
+    # --- 3) FINANCE QUERY WITHOUT TICKER ---
+    if any(kw in query_lower for kw in FINANCE_KEYWORDS):
+        # give LLM explanation
+        return [query_llm(query)]
 
-    # --- 4) NOT FINANCE → completely block ---
+    # --- 4) NON-FINANCE QUERY ---
     return [" This agent only handles stock & finance-related queries."]
-
-
-
 # ---------------------------
 #    STREAMLIT UI
 # ---------------------------
 st.set_page_config(page_title="AI Stock Agent", layout="wide")
-st.title("📊 AI Stock Agent (Mistral + Streamlit + Finance)")
+st.title(" AI Stock Agent (Mistral + Streamlit + Finance)")
 st.write("Ask anything! Example: **TSLA**, **How is MSFT performing today?**, **Explain AI**")
 
 # Sidebar
 with st.sidebar:
-    st.header("ℹ️ Info")
+    st.header(" Info")
     st.write("Built with:")
     st.write("- Mistral API")
     st.write("- yfinance")
@@ -224,7 +221,7 @@ with st.sidebar:
     st.write("- Python Agents")
 
     if not MISTRAL_API_KEY:
-        st.error("❌ MISTRAL_API_KEY not set!")
+        st.error(" MISTRAL_API_KEY not set!")
 
 # User Input
 query = st.text_input("Enter your query:")
@@ -252,6 +249,6 @@ if query:
         st.success("Saved!")
 
 if st.session_state.history:
-    st.subheader("🕘 Recent History")
+    st.subheader(" Recent History")
     for h in reversed(st.session_state.history[-10:]):
         st.write(f"- {h}")
