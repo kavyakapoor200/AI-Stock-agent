@@ -90,12 +90,6 @@ MISTRAL_API_KEY = "your_mistral_api_key_here"
 
 ---
 
-## 🧾 Screenshot Preview
-
-*(Add screenshots here to showcase the UI, chart, company info, etc.)*
-
----
-
 ## 🔭 Future Enhancements
 
 * Multi-stock comparison (e.g., TSLA vs AAPL)
@@ -116,3 +110,4 @@ LinkedIn: [Your LinkedIn Profile](https://www.linkedin.com/in/kavya-kapoor-54ab2
 Thanks for visiting — feel free to try the app and explore the new world of AI-powered finance!
 
 ```
+
